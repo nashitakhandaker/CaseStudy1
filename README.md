@@ -18,3 +18,14 @@ Two models were tested — K-Nearest Neighbors (KNN) and Naïve Bayes.
 - The strongest predictors of attrition were overtime, job satisfaction, and income level.
 - Employees facing burnout, low engagement, or limited financial growth are the highest-risk group.
 - Predictive modeling enables data-driven HR decisions, allowing Frito-Lay to proactively address retention risks and reduce turnover costs.
+
+## Sources
+Below are sources I used as references for this case study
+ - https://topepo.github.io/caret/model-training-and-tuning.html
+ - https://www.geeksforgeeks.org/knn-in-r-programming/
+ - https://rpubs.com/riazkhan94/naive-bayes-r
+ - https://www.r-bloggers.com/2021/12/how-to-split-data-into-train-and-test-in-r/
+ - https://www.geeksforgeeks.org/undersampling-in-r/
+ - https://stackoverflow.com/questions/74235618/undersampling-by-groups-in-r-to-address-class-and-features-imbalance-issues-in-h
+ - https://youtu.be/bWD9Bmrru44?si=5sIyBaRh-7wYa81p
+ - All readings
