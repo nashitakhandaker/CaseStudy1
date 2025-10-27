@@ -124,7 +124,7 @@ nb_model <- naiveBayes(
 
 nb_prob <- predict(nb_model, newdata = test, type = "raw")[, "Yes"]
 
-threshold <- 0.35
+threshold <- 0.45
 nb_pred <- ifelse(nb_prob > threshold, "Yes", "No")
 nb_pred <- factor(nb_pred, levels = c("No", "Yes"))
 
