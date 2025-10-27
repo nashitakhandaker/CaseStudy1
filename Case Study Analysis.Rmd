@@ -1,7 +1,7 @@
 ---
-title: "Untitled"
+title: "Case Study Frito Analysis"
 output: html_document
-date: "2025-10-27"
+date: "2025-10-26"
 ---
 
 ```{r setup, include=FALSE}
@@ -13,6 +13,8 @@ library(e1071)
 library(caret)
 library(scales)
 ```
+
+link to presentation: https://youtu.be/FpO10GJcLcA
 
 ## EDA
 
