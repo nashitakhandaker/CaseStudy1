@@ -464,7 +464,7 @@ nb_model &lt;- naiveBayes(
 
 nb_prob &lt;- predict(nb_model, newdata = test, type = &quot;raw&quot;)[, &quot;Yes&quot;]
 
-threshold &lt;- 0.45
+threshold &lt;- 0.55
 nb_pred &lt;- ifelse(nb_prob &gt; threshold, &quot;Yes&quot;, &quot;No&quot;)
 nb_pred &lt;- factor(nb_pred, levels = c(&quot;No&quot;, &quot;Yes&quot;))
 
@@ -473,27 +473,27 @@ cm_nb  </code></pre>
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
-## Prediction No Yes
-##        No  67   7
-##        Yes 76  24
+## Prediction  No Yes
+##        No  110  11
+##        Yes  33  20
 ##                                           
-##                Accuracy : 0.523           
-##                  95% CI : (0.4461, 0.5991)
+##                Accuracy : 0.7471          
+##                  95% CI : (0.6758, 0.8099)
 ##     No Information Rate : 0.8218          
-##     P-Value [Acc &gt; NIR] : 1               
+##     P-Value [Acc &gt; NIR] : 0.994867        
 ##                                           
-##                   Kappa : 0.1297          
+##                   Kappa : 0.3243          
 ##                                           
-##  Mcnemar&#39;s Test P-Value : 8.395e-14       
+##  Mcnemar&#39;s Test P-Value : 0.001546        
 ##                                           
-##             Sensitivity : 0.7742          
-##             Specificity : 0.4685          
-##          Pos Pred Value : 0.2400          
-##          Neg Pred Value : 0.9054          
+##             Sensitivity : 0.6452          
+##             Specificity : 0.7692          
+##          Pos Pred Value : 0.3774          
+##          Neg Pred Value : 0.9091          
 ##              Prevalence : 0.1782          
-##          Detection Rate : 0.1379          
-##    Detection Prevalence : 0.5747          
-##       Balanced Accuracy : 0.6214          
+##          Detection Rate : 0.1149          
+##    Detection Prevalence : 0.3046          
+##       Balanced Accuracy : 0.7072          
 ##                                           
 ##        &#39;Positive&#39; Class : Yes             
 ## </code></pre>
