@@ -1,0 +1,173 @@
+---
+title: "Untitled"
+output: html_document
+date: "2025-10-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(class)
+library(e1071)
+library(caret)
+library(scales)
+```
+
+## EDA
+
+```{r dataset}
+data <- read.csv("~/Desktop/CaseStudy1-data.csv")
+data$Attrition <- factor(data$Attrition, levels = c("No", "Yes"))
+```
+
+## Visualizations
+
+```{r pressure, echo=FALSE}
+ggplot(data, aes(x = Attrition, fill = Attrition)) +
+  geom_bar(width = 0.6, color = "black") +
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.3, size = 4) +
+  scale_fill_manual(values = c("No" = "#6A5ACD", "Yes" = "#1E90FF")) +
+  labs(
+    title = "Overall Employee Attrition",
+    subtitle = "Majority of employees have stayed with the company",
+    x = "Attrition Status", y = "Number of Employees"
+  )
+
+data$OverTime <- as.factor(data$OverTime)
+ggplot(data, aes(x = OverTime, fill = Attrition)) +
+  geom_bar(position = "fill", color = "black", width = 0.7) +
+  scale_y_continuous(labels = percent) +
+  scale_fill_manual(values = c("No" = "#6A5ACD", "Yes" = "#1E90FF")) +
+  labs(
+    title = "Attrition by Overtime",
+    subtitle = "Employees working overtime show higher attrition proportion",
+    x = "Overtime Status", y = "Percent of Employees"
+  )
+
+data$JobSatisfaction <- as.factor(data$JobSatisfaction)
+ggplot(data, aes(x = JobSatisfaction, fill = Attrition)) +
+  geom_bar(position = "fill", color = "black") +
+  scale_y_continuous(labels = percent) +
+  scale_fill_manual(values = c("No" = "#6A5ACD", "Yes" = "#1E90FF")) +
+  labs(
+    title = "Attrition by Job Satisfaction",
+    subtitle = "Lower satisfaction scores correlate with higher attrition",
+    x = "Job Satisfaction (1 = Low, 4 = High)", y = "Percent of Employees"
+  )
+
+data$MonthlyIncome <- as.numeric(data$MonthlyIncome)
+ggplot(data, aes(x = MonthlyIncome, fill = Attrition)) +
+  geom_histogram(position = "identity", bins = 25, alpha = 0.7, color = "black") +
+  scale_fill_manual(values = c("No" = "#6A5ACD", "Yes" = "#1E90FF")) +
+  labs(
+    title = "Income Distribution by Attrition",
+    subtitle = "Attrition tends to occur more in lower income brackets",
+    x = "Monthly Income ($)", y = "Number of Employees"
+  ) +
+  theme(legend.position = "top")
+```
+
+## Check structure and missing values to determine if preprocessing is needed
+```{r}
+anyNA(data)
+str(data)
+```
+
+## Training/testing split: 80/20
+```{r}
+n.points <- nrow(data)
+sampling.rate <- 0.8
+set.seed(123)
+
+training <- sample(1:n.points, sampling.rate * n.points, replace = FALSE)
+testing <- setdiff(1:n.points, training)
+
+train <- subset(data[training, ], select = c(OverTime, JobSatisfaction, MonthlyIncome))
+test  <- subset(data[testing, ],  select = c(OverTime, JobSatisfaction, MonthlyIncome))
+
+train_labels <- data$Attrition[training]
+test_labels  <- data$Attrition[testing]
+```
+
+## Undersampling to balance out the dataset (since there are a lot more no's than yes)
+```{r}
+train_df <- cbind(train, Attrition = train_labels)
+
+no  <- which(train_df$Attrition == "No")
+yes <- which(train_df$Attrition == "Yes")
+
+no_sample <- sample(no, length(yes))
+train_balanced <- train_df[c(yes, no_sample), ]
+
+table(train_balanced$Attrition)
+```
+
+## Standardizing
+```{r}
+train_balanced$MonthlyIncome <- scale(train_balanced$MonthlyIncome)
+test$MonthlyIncome <- scale(test$MonthlyIncome)
+```
+
+## Naive Bayes
+```{r}
+train_balanced$OverTime <- as.factor(train_balanced$OverTime)
+train_balanced$JobSatisfaction <- as.factor(train_balanced$JobSatisfaction)
+test$OverTime <- as.factor(test$OverTime)
+test$JobSatisfaction <- as.factor(test$JobSatisfaction)
+
+nb_model <- naiveBayes(
+  Attrition ~ OverTime + JobSatisfaction + MonthlyIncome,
+  data = train_balanced,
+  laplace = 1
+)
+
+nb_prob <- predict(nb_model, newdata = test, type = "raw")[, "Yes"]
+
+threshold <- 0.35
+nb_pred <- ifelse(nb_prob > threshold, "Yes", "No")
+nb_pred <- factor(nb_pred, levels = c("No", "Yes"))
+
+cm_nb <- confusionMatrix(nb_pred, test_labels, positive = "Yes")
+cm_nb  
+```
+
+## KNN / tuning (comes out to be best performing)
+### Sensitivity : 0.7097          
+### Specificity : 0.6224  
+```{r}
+train_knn <- train_balanced %>%
+  mutate(
+    OverTime = as.numeric(factor(OverTime)),
+    JobSatisfaction = as.numeric(factor(JobSatisfaction))
+  )
+
+test_knn <- test %>%
+  mutate(
+    OverTime = as.numeric(factor(OverTime)),
+    JobSatisfaction = as.numeric(factor(JobSatisfaction))
+  )
+
+train_labels_bal <- train_balanced$Attrition
+
+accs <- data.frame(k = 1:15, BalancedAcc = NA)
+
+for (i in 1:15) {
+  knn_pred <- knn(train = train_knn[, 1:3],
+                  test  = test_knn[, 1:3],
+                  cl    = train_labels_bal,
+                  k     = i)
+  cm <- confusionMatrix(knn_pred, test_labels, positive = "Yes")
+  accs$BalancedAcc[i] <- cm$byClass["Balanced Accuracy"]
+}
+
+best_k <- accs$k[which.max(accs$BalancedAcc)]
+best_k
+knn_pred_final <- knn(train = train_knn[, 1:3],
+                      test  = test_knn[, 1:3],
+                      cl    = train_labels_bal,
+                      k     = best_k)
+
+cm_knn <- confusionMatrix(knn_pred_final, test_labels, positive = "Yes")
+cm_knn 
+```
